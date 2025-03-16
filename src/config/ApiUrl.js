@@ -1,5 +1,5 @@
 
-const DEFAULT_URL = import.meta.env.DEFAULT_URL || "http://localhost:3000";
+const DEFAULT_URL = import.meta.env.DEFAULT_URL || "https://meowchat-be-nzzfb.ondigitalocean.app";
 
 export const API_URL_LOGIN = (username) => { 
     const url = new URL(`${DEFAULT_URL}/api/v1/log_in`);
