@@ -41,6 +41,19 @@
         }
     }
 
+    .chatroom-title{
+        display: flex;
+        align-items: center;
+        flex-direction: column;
+    }
+
+    .user-title{
+        display: flex;
+        align-items: center;
+        flex-direction: column;
+        padding-top: 15px;
+    }
+
     .item{
         display: flex;
         align-items: center;

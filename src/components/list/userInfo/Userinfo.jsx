@@ -1,17 +1,25 @@
+import { useChatStore } from "../../../lib/chatStore";
+import { useUserStore } from "../../../lib/userStore";
 import "./userInfo.css"
 
 const Userinfo = () => {
+
+    const {currentUser, resetUserStore} = useUserStore();
+    const {resetChatStore} = useChatStore();
+
+    const resetSession = async (e) => {
+        e.preventDefault();
+        resetChatStore();
+        resetUserStore();
+    };
+
     return (
         <div className="userInfo">
             <div className="user">
                 <img src="./avatar.png" alt="" />
-                <h2>John Doe</h2>
+                <h2>{currentUser.username}</h2>
             </div>
-            <div className="icons">
-                <img src="./more.png" alt="" />
-                <img src="./video.png" alt="" />
-                <img src="./edit.png" alt="" />
-            </div>
+            <button className="logout" onClick={resetSession}>Log Out</button>
         </div>
     )
 }
