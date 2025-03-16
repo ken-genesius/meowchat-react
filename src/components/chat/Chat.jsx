@@ -4,9 +4,9 @@ import EmojiPicker from "emoji-picker-react"
 import { useChatStore } from "../../lib/chatStore";
 import { useUserStore } from "../../lib/userStore";
 import { toast } from "react-toastify";
-import { formatDistanceToNow } from "date-fns";
 import cable from "../../lib/cable";
 import { format } from "timeago.js";
+import { API_URL_INITIATE_CHATROOM, API_URL_SEND_MESSAGE } from "../../config/ApiUrl";
 
 const Chat = () => {
     const [open, setOpen] = useState(false);
@@ -24,16 +24,13 @@ const Chat = () => {
 
     useEffect( () => {
         endRef.current?.scrollIntoView({behavior: "smooth" });
-    },[])
+    },[chatMessages])
 
     useEffect(() => {
 
         const chatroomAPI = async (e) => {
             try{
-                const API_URL = new URL("http://localhost:3000/api/v1/initiate_chatroom");
-                API_URL.searchParams.append("currentId",currentUser.id);
-                API_URL.searchParams.append("typeId",typeId);
-                API_URL.searchParams.append("typeName",typeName);
+                const API_URL = API_URL_INITIATE_CHATROOM(currentUser.id, typeId, typeName);
 
                 const response = await fetch(API_URL, {
                     method: "POST",
@@ -97,10 +94,7 @@ const Chat = () => {
         if(text === "") return;
 
         try{
-            const API_URL = new URL("http://localhost:3000/api/v1/messages");
-            API_URL.searchParams.append("user_id",currentUser.id);
-            API_URL.searchParams.append("chatroom_id",chatroomId);
-            API_URL.searchParams.append("body",text);
+            const API_URL = API_URL_SEND_MESSAGE(currentUser.id, chatroomId, text);
 
             const response = await fetch(API_URL, {
                 method: "POST",

@@ -3,6 +3,7 @@ import "./chatList.css";
 import { useUserStore } from "../../../lib/userStore";
 import { useChatStore } from "../../../lib/chatStore";
 import cable from "../../../lib/cable";
+import { API_URL_ADD_CHATROOM, API_URL_GET_CHATROOM_LIST } from "../../../config/ApiUrl";
 
 const ChatList = () => {
 
@@ -16,7 +17,7 @@ const ChatList = () => {
     useEffect(() => {
         const chatroomAPI = async (e) => {
             try{
-                const API_URL = new URL("http://localhost:3000/api/v1/chatrooms");
+                const API_URL = API_URL_GET_CHATROOM_LIST;
 
                 const response = await fetch(API_URL, {
                     method: "GET",
@@ -80,8 +81,7 @@ const ChatList = () => {
         console.log("Call add chatroom API with name", name);
 
         try{
-            const API_URL = new URL("http://localhost:3000/api/v1/chatrooms");
-            API_URL.searchParams.append("name",name);
+            const API_URL = API_URL_ADD_CHATROOM(name);
 
             const response = await fetch(API_URL, {
                 method: "POST",

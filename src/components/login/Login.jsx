@@ -2,6 +2,7 @@ import "./login.css";
 import { useState } from "react";
 import { toast } from "react-toastify";
 import { useUserStore } from "../../lib/userStore";
+import { API_URL_LOGIN } from "../../config/ApiUrl";
 
 
 const Login = () => {
@@ -18,8 +19,7 @@ const Login = () => {
         const {username} = Object.fromEntries(formData);
 
         try{
-            const API_URL = new URL("http://localhost:3000/api/v1/log_in");
-            API_URL.searchParams.append("username",username);
+            const API_URL = API_URL_LOGIN(username);
 
             const response = await fetch(API_URL, {
                 method: "POST",
