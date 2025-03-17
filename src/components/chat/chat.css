@@ -73,6 +73,12 @@
                 .texts{
                     p{
                         background-color: #5183fe;
+                        align-self: flex-end;
+                    }
+
+                    span{
+                        align-self: flex-end;
+                        margin-right: 5px;
                     }
                 }
             }
@@ -96,6 +102,11 @@
                     object-fit: cover;
                 }
 
+                h4{
+                    margin-left: 5px;
+                    font-size: 14px;
+                }
+
                 p{
                     padding: 20px;
                     background-color: rgba(17, 25, 40, 0.3);
@@ -104,6 +115,7 @@
 
                 span{
                     font-size: 13px;
+                    margin-left: 5px;
                 }
             }
         }
@@ -128,7 +140,7 @@
             height: 20px;
             cursor: pointer;
         }
-
+        
         input{
             flex: 1;
             background-color: rgba(17, 25, 40, 0.5);

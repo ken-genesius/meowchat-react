@@ -18,7 +18,6 @@ const App = () => {
           <>
             <List/>
             <Chat/>
-            <Detail/>
           </>
         ) : (
         <Login/>

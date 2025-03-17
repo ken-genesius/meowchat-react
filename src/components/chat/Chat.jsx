@@ -1,131 +1,162 @@
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import "./chat.css"
 import EmojiPicker from "emoji-picker-react"
+import { useChatStore } from "../../lib/chatStore";
+import { useUserStore } from "../../lib/userStore";
+import { toast } from "react-toastify";
+import cable from "../../lib/cable";
+import { format } from "timeago.js";
+import { API_URL_INITIATE_CHATROOM, API_URL_SEND_MESSAGE } from "../../config/ApiUrl";
 
 const Chat = () => {
-const [open, setOpen] = useState(false);
-const [text, setText] = useState("");
+    const [open, setOpen] = useState(false);
+    const [text, setText] = useState("");
 
-const handleEmoji = e => {
-    setText(prev => prev+e.emoji);
-    setOpen(false)
-};
+    const [chatData, setChatData] = useState({});
+    const [chatMessages, setChatMessages] = useState([]);
+    const [chatroomId, setChatroomId] = useState(null);
 
-console.log(text)
+    const {typeId, typeName} = useChatStore();
+    const {currentUser} = useUserStore();
+
+    const subscriptionRef = useRef(null);
+    const endRef = useRef(null);
+
+    useEffect( () => {
+        endRef.current?.scrollIntoView({behavior: "smooth" });
+    },[chatMessages])
+
+    useEffect(() => {
+
+        const chatroomAPI = async (e) => {
+            try{
+                const API_URL = API_URL_INITIATE_CHATROOM(currentUser.id, typeId, typeName);
+
+                const response = await fetch(API_URL, {
+                    method: "POST",
+                    headers: {"Content-Type":"application/json"}
+                });
+
+                const jsonData = await response.json();
+                console.log("JSON Data", jsonData);
+                setChatData(jsonData.typeData);
+                setChatMessages(jsonData.messages);
+                console.log("ID Chatroom",jsonData.typeData.id);
+                setChatroomId(jsonData.typeData.id);
+            }catch(err){
+                console.log(err);
+                toast.error(err.message);
+            }
+        }
+        if(typeId)
+            chatroomAPI();
+
+    }, [typeId, typeName]);
+
+    useEffect(() => {
+        if(!chatroomId)
+            return;
+
+        if (subscriptionRef.current) {
+            subscriptionRef.current.unsubscribe();
+        }
+
+        subscriptionRef.current = cable.subscriptions.create({ channel: "MessagesChannel", id: chatroomId },{
+            received(data){
+                console.log("Received data", data);
+
+                if(data.type === "newMessages")
+                {
+                    console.log("masuk if newMessages");
+                    setChatMessages((prev) => [...prev, data.message]);
+                }
+            }
+        });
+
+        return () => {
+            if (subscriptionRef.current) {
+                subscriptionRef.current.unsubscribe();
+                subscriptionRef.current = null; // Reset subscription reference
+            }
+        }
+    }, [chatroomId])
+
+    console.log("typeId", typeId);
+    console.log("typeName", typeName);
+
+    const handleEmoji = e => {
+        setText(prev => prev+e.emoji);
+        setOpen(false)
+    };
+
+    const handleSend = async (e) => {
+        e.preventDefault();
+        if(text === "") return;
+
+        try{
+            const API_URL = API_URL_SEND_MESSAGE(currentUser.id, chatroomId, text);
+
+            const response = await fetch(API_URL, {
+                method: "POST",
+                headers: {"Content-Type":"application/json"}
+            });
+        }
+        catch(err){
+            console.log(err);
+        } finally{
+            setText("");
+        }
+    }
 
     return (
         <div className="chat">
+            {typeId && 
             <div className="top">
                 <div className="user">
                     <img src="./avatar.png" alt="" />
                     <div className="texts">
-                        <span>Jane Doe</span>
-                        <p>Lorem ipsum dolor sit amet</p>
+                        <span>{chatData.name}</span>
                     </div>
                 </div>
-                <div className="icons">
-                    <img src="./phone.png" alt="" />
-                    <img src="./video.png" alt="" />
-                    <img src="./info.png" alt="" />
-                </div>
             </div>
+            }
+            {typeId &&
             <div className="center">
-                <div className="message own">
-                    <div className="texts">
-                        <p>
-                            Lorem ipsum dolor sit amet consectetur adipisicing elit. 
-                            Sunt eligendi nihil fuga repudiandae architecto? Non, 
-                            dignissimos. Doloribus error labore eius architecto nulla, 
-                            assumenda vero. Dolorum accusantium autem quidem fuga? 
-                            Aliquam?
-                        </p>
-                        <span>1 min ago</span>
-                    </div>
-                </div>
-                <div className="message">
+                {chatMessages.map((chatMessage) => (
+                <div className={chatMessage.user_id === currentUser.id ? 'message own' : 'message'} key={chatMessage.id}>
+                    {chatMessage.user_id !== currentUser.id && 
                     <img src="./avatar.png" alt="" />
+                    }
                     <div className="texts">
+                        {typeName === "chatroom" && chatMessage.user_id !== currentUser.id && 
+                        <h4>{chatMessage.username}</h4>
+                        }
                         <p>
-                            Lorem ipsum dolor sit amet consectetur adipisicing elit. 
-                            Sunt eligendi nihil fuga repudiandae architecto? Non, 
-                            dignissimos. Doloribus error labore eius architecto nulla, 
-                            assumenda vero. Dolorum accusantium autem quidem fuga? 
-                            Aliquam?
+                            {chatMessage.body}
                         </p>
-                        <span>1 min ago</span>
+                        <span>{format(new Date(chatMessage.created_at))}</span>
                     </div>
                 </div>
-                <div className="message own">
-                    <div className="texts">
-                        <p>
-                            Lorem ipsum dolor sit amet consectetur adipisicing elit. 
-                            Sunt eligendi nihil fuga repudiandae architecto? Non, 
-                            dignissimos. Doloribus error labore eius architecto nulla, 
-                            assumenda vero. Dolorum accusantium autem quidem fuga? 
-                            Aliquam?
-                        </p>
-                        <span>1 min ago</span>
-                    </div>
-                </div>
-                <div className="message">
-                    <img src="./avatar.png" alt="" />
-                    <div className="texts">
-                        <p>
-                            Lorem ipsum dolor sit amet consectetur adipisicing elit. 
-                            Sunt eligendi nihil fuga repudiandae architecto? Non, 
-                            dignissimos. Doloribus error labore eius architecto nulla, 
-                            assumenda vero. Dolorum accusantium autem quidem fuga? 
-                            Aliquam?
-                        </p>
-                        <span>1 min ago</span>
-                    </div>
-                </div>
-                <div className="message own">
-                    <div className="texts">
-                        <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8bGFuZHNjYXBlfGVufDB8fDB8fHww" alt="" />
-                        <p>
-                            Lorem ipsum dolor sit amet consectetur adipisicing elit. 
-                            Sunt eligendi nihil fuga repudiandae architecto? Non, 
-                            dignissimos. Doloribus error labore eius architecto nulla, 
-                            assumenda vero. Dolorum accusantium autem quidem fuga? 
-                            Aliquam?
-                        </p>
-                        <span>1 min ago</span>
-                    </div>
-                </div>
-                <div className="message">
-                    <img src="./avatar.png" alt="" />
-                    <div className="texts">
-                        <p>
-                            Lorem ipsum dolor sit amet consectetur adipisicing elit. 
-                            Sunt eligendi nihil fuga repudiandae architecto? Non, 
-                            dignissimos. Doloribus error labore eius architecto nulla, 
-                            assumenda vero. Dolorum accusantium autem quidem fuga? 
-                            Aliquam?
-                        </p>
-                        <span>1 min ago</span>
-                    </div>
-                </div>
+                ))}
+                <div ref={endRef}></div>
             </div>
-            <div className="bottom">
-                <div className="icons">
-                    <img src="./img.png" alt="" />
-                    <img src="./camera.png" alt="" />
-                    <img src="./mic.png" alt="" />
-                </div>
-                <input type="text" 
-                placeholder="Type a message..." 
-                value={text}
-                onChange={e => setText(e.target.value)}/>
-                <div className="emoji">
-                    <img src="./emoji.png" alt="" 
-                    onClick={() => setOpen(prev => !prev)} />
-                    <div className="picker">
-                        <EmojiPicker open={open} onEmojiClick={handleEmoji}/>
+            }
+            {typeId && 
+                <form id="addChatroomForm" onSubmit={handleSend} className="bottom">
+                    <input type="text" 
+                    placeholder="Type a message..." 
+                    value={text}
+                    onChange={e => setText(e.target.value)}/>
+                    <div className="emoji">
+                        <img src="./emoji.png" alt="" 
+                        onClick={() => setOpen(prev => !prev)} />
+                        <div className="picker">
+                            <EmojiPicker open={open} onEmojiClick={handleEmoji}/>
+                        </div>
                     </div>
-                </div>
-                <button className="sendButton">Send</button>
-            </div>
+                    <button className="sendButton">Send</button>
+                </form>
+            }
         </div>
     )
 }
